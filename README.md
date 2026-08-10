@@ -2,6 +2,9 @@
 
 React + TypeScript application that classifies potentially NSFW video content locally in the browser using TensorFlow.js and NSFWJS.
 
+**Repository:** [github.com/NebyuCodes/video-detection](https://github.com/NebyuCodes/video-detection)  
+**Clone:** `git@github.com:NebyuCodes/video-detection.git`
+
 For the full assignment write-up (setup, architecture, model choice, tradeoffs, measurements, limitations, mobile path), see [DELIVERABLES.md](./DELIVERABLES.md).
 
 ## Features

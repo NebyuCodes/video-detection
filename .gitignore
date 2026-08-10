@@ -1,3 +1,14 @@
+# Dependencies
+node_modules
+
+# Build
+dist
+dist-ssr
+*.local
+
+# Generated WASM copies (restored by postinstall)
+public/wasm/*.wasm
+
 # Logs
 logs
 *.log
@@ -7,12 +18,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Environment
+.env
+.env.*
+!.env.example
 
-# Editor directories and files
+# Editor / OS
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +33,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+Thumbs.db
+
+# TypeScript / tooling caches
+*.tsbuildinfo
+node_modules/.tmp
+.eslintcache
+
+# Test / coverage
+coverage
+.nyc_output
+
+# Misc
+*.pem
+.cache
