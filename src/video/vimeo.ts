@@ -39,8 +39,17 @@ export async function resolveVimeoUrl(
   endpoint.searchParams.set('id', id)
 
   const response = await fetch(endpoint.toString())
-  const payload = (await response.json()) as ResolvedVimeoSource & {
-    error?: string
+  const raw = await response.text()
+
+  let payload: (ResolvedVimeoSource & { error?: string }) | null = null
+  try {
+    payload = JSON.parse(raw) as ResolvedVimeoSource & { error?: string }
+  } catch {
+    throw new Error(
+      response.ok
+        ? 'Vimeo resolve returned a non-JSON response.'
+        : `Vimeo resolve API is unavailable (${response.status}). Redeploy so /api/vimeo/resolve is live.`,
+    )
   }
 
   if (!response.ok) {

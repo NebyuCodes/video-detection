@@ -35,11 +35,15 @@ npm run preview
 
 1. Push the repo to GitHub (`git@github.com:NebyuCodes/video-detection.git`).
 2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import `NebyuCodes/video-detection`.
-3. Keep defaults (Vite is auto-detected):
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
+3. Keep Vercel’s Vite defaults (do **not** override Output to a custom static-only setup):
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build` (or default)
+   - **Output Directory:** `dist` (Vite default)
    - **Install Command:** `npm install` (runs `postinstall` to copy WASM files)
 4. Click **Deploy**.
+5. After deploy, verify the API works by opening:
+   `https://YOUR_DOMAIN/api/vimeo/resolve?id=347119375`
+   You should see JSON (not an HTML 404 page).
 
 Or from the CLI:
 
