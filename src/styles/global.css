@@ -285,11 +285,20 @@ p {
   border: 1px dashed rgba(255, 255, 255, 0.18);
 }
 
-.preview video {
+.preview video,
+.preview iframe {
   width: 100%;
   max-height: 360px;
+  min-height: 220px;
   display: block;
   background: #000;
+  border: 0;
+}
+
+.preview iframe {
+  aspect-ratio: 16 / 9;
+  max-height: none;
+  height: min(360px, 56vw);
 }
 
 .preview-note {

@@ -23,6 +23,7 @@ import { isLikelyCorsFailure } from '../video/cors'
 import {
   buildSamplePlan,
   iterateFrames,
+  iterateFramesByPlayback,
   readVideoMetadata,
 } from '../video/frameExtractor'
 import {
@@ -176,11 +177,11 @@ export function useVideoProcessor() {
 
         let aggregation = createAggregationState()
 
-        for await (const { sample, bitmap } of iterateFrames(
-          video,
-          samples,
-          controller.signal,
-        )) {
+        const frameIterator = isHls
+          ? iterateFramesByPlayback(video, samples, controller.signal)
+          : iterateFrames(video, samples, controller.signal)
+
+        for await (const { sample, bitmap } of frameIterator) {
           if (controller.signal.aborted) {
             closeImageBitmap(bitmap)
             throw new DOMException('Aborted', 'AbortError')

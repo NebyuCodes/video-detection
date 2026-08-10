@@ -1,5 +1,6 @@
 import type { FrameSample, VideoMetadata } from '../types/video'
 import { closeImageBitmap, closeVideoFrame } from '../utils/resourceCleanup'
+import { ensureCurrentFrame, waitForCondition } from './mediaReady'
 import { seekVideo } from './videoSource'
 
 export function readVideoMetadata(video: HTMLVideoElement): VideoMetadata {
@@ -109,19 +110,11 @@ async function extractWithCanvas(
   }
 }
 
-export async function extractFrameBitmap(
+export async function captureCurrentFrame(
   video: HTMLVideoElement,
-  timestamp: number,
-  abortSignal?: AbortSignal,
 ): Promise<ImageBitmap> {
-  await seekVideo(video, timestamp, abortSignal)
-
-  if (abortSignal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError')
-  }
-
-  if (video.readyState < 2) {
-    throw new Error(`Frame unavailable at ${timestamp.toFixed(2)}s.`)
+  if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+    throw new Error('Frame unavailable at current playback position.')
   }
 
   try {
@@ -133,6 +126,21 @@ export async function extractFrameBitmap(
   }
 
   return extractWithCanvas(video)
+}
+
+export async function extractFrameBitmap(
+  video: HTMLVideoElement,
+  timestamp: number,
+  abortSignal?: AbortSignal,
+): Promise<ImageBitmap> {
+  await seekVideo(video, timestamp, abortSignal)
+
+  if (abortSignal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError')
+  }
+
+  await ensureCurrentFrame(video, 8000, abortSignal)
+  return captureCurrentFrame(video)
 }
 
 export async function* iterateFrames(
@@ -161,4 +169,75 @@ export async function* iterateFrames(
       )
     }
   }
+}
+
+export async function* iterateFramesByPlayback(
+  video: HTMLVideoElement,
+  samples: FrameSample[],
+  abortSignal?: AbortSignal,
+): AsyncGenerator<{ sample: FrameSample; bitmap: ImageBitmap }> {
+  const ordered = [...samples].sort((a, b) => a.timestamp - b.timestamp)
+  video.muted = true
+  video.playbackRate = 1
+
+  try {
+    await video.play()
+  } catch {
+    // continue; wait loop still advances on timeupdate/currentTime
+  }
+
+  for (const sample of ordered) {
+    if (abortSignal?.aborted) {
+      video.pause()
+      throw new DOMException('Aborted', 'AbortError')
+    }
+
+    try {
+      if (video.paused) {
+        await video.play().catch(() => undefined)
+      }
+
+      await waitForCondition(
+        () =>
+          video.ended ||
+          video.currentTime + 0.2 >= sample.timestamp ||
+          (Number.isFinite(video.duration) &&
+            video.currentTime >= video.duration - 0.05),
+        90000,
+        abortSignal,
+        `playback near ${sample.timestamp.toFixed(1)}s`,
+      )
+
+      video.pause()
+      await ensureCurrentFrame(video, 8000, abortSignal)
+
+      let bitmap: ImageBitmap | null = null
+      try {
+        bitmap = await captureCurrentFrame(video)
+        const frame = bitmap
+        bitmap = null
+        yield {
+          sample: {
+            ...sample,
+            timestamp: video.currentTime,
+          },
+          bitmap: frame,
+        }
+      } catch (captureError) {
+        closeImageBitmap(bitmap)
+        throw captureError
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        video.pause()
+        throw error
+      }
+      console.warn(
+        `[video] Skipping playback sample near ${sample.timestamp.toFixed(2)}s`,
+        error,
+      )
+    }
+  }
+
+  video.pause()
 }

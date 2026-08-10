@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { VideoSourceInfo } from '../types/video'
+import { extractVimeoId } from '../video/vimeo'
 import { attachMediaSource } from '../video/hlsAttach'
 
 interface VideoPlayerProps {
@@ -11,12 +12,26 @@ export function VideoPlayer({ source }: VideoPlayerProps) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
+  const vimeoId = useMemo(() => {
+    if (!source || source.provider !== 'vimeo') {
+      return null
+    }
+    return extractVimeoId(source.pageUrl || '') || extractVimeoId(source.url)
+  }, [source])
+
   useEffect(() => {
     setLoadError(null)
     setReady(false)
 
+    if (!source || vimeoId) {
+      if (vimeoId) {
+        setReady(true)
+      }
+      return
+    }
+
     const video = videoRef.current
-    if (!source || !video) {
+    if (!video) {
       return
     }
 
@@ -25,11 +40,9 @@ export function VideoPlayer({ source }: VideoPlayerProps) {
 
     void (async () => {
       try {
-        if (source.kind === 'remote') {
-          video.crossOrigin = 'anonymous'
-        } else {
-          video.removeAttribute('crossorigin')
-        }
+        video.removeAttribute('crossorigin')
+        video.removeAttribute('src')
+        video.load()
 
         const attached = await attachMediaSource(
           video,
@@ -60,7 +73,7 @@ export function VideoPlayer({ source }: VideoPlayerProps) {
       cancelled = true
       destroy?.()
     }
-  }, [source])
+  }, [source, vimeoId])
 
   if (!source) {
     return (
@@ -90,27 +103,42 @@ export function VideoPlayer({ source }: VideoPlayerProps) {
         </span>
       </div>
       <div className="preview">
-        <video
-          ref={videoRef}
-          controls
-          playsInline
-          preload="metadata"
-          onLoadedData={() => {
-            setReady(true)
-            setLoadError(null)
-          }}
-          onError={() => {
-            setLoadError(
-              source.kind === 'remote'
-                ? 'Could not load this remote video for preview. The URL may be invalid, blocked, or unavailable.'
-                : 'Could not load this video for preview.',
-            )
-          }}
-        />
+        {vimeoId ? (
+          <iframe
+            title={source.label || 'Vimeo preview'}
+            src={`https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0`}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            controls
+            playsInline
+            muted
+            preload="auto"
+            onLoadedData={() => {
+              setReady(true)
+              setLoadError(null)
+            }}
+            onError={() => {
+              if (source.streamKind === 'hls') {
+                return
+              }
+              setLoadError(
+                source.kind === 'remote'
+                  ? 'Could not load this remote video for preview. The URL may be invalid, blocked, or unavailable.'
+                  : 'Could not load this video for preview.',
+              )
+            }}
+          />
+        )}
       </div>
       {source.provider === 'vimeo' ? (
         <p className="preview-note">
-          Vimeo page URL resolved to a stream for preview and analysis.
+          Preview uses the Vimeo player embed. Analysis still samples frames from
+          the resolved stream.
           {source.pageUrl ? ` Source: ${source.pageUrl}` : ''}
         </p>
       ) : source.kind === 'remote' ? (

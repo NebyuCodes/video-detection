@@ -6,7 +6,7 @@ import { attachMediaSource, type AttachedStream } from './hlsAttach'
 import { ensureCurrentFrame, waitForCondition } from './mediaReady'
 import { isVimeoUrl, resolveVimeoUrl } from './vimeo'
 
-const VIDEO_READY_TIMEOUT_MS = 20000
+const VIDEO_READY_TIMEOUT_MS = 35000
 
 const BLOCKED_STREAMING_HOSTS = [
   'youtube.com',
@@ -147,7 +147,12 @@ export async function prepareVideoElement(
   video.playsInline = true
   video.preload = 'auto'
   video.controls = false
-  video.style.display = 'none'
+  video.style.position = 'fixed'
+  video.style.left = '-10000px'
+  video.style.width = '320px'
+  video.style.height = '180px'
+  video.style.opacity = '0'
+  video.style.pointerEvents = 'none'
 
   if (source.kind === 'remote') {
     video.crossOrigin = 'anonymous'
@@ -171,7 +176,14 @@ export async function prepareVideoElement(
       'video metadata',
     )
 
+    try {
+      await video.play()
+    } catch {
+      // ignore
+    }
+
     await ensureCurrentFrame(video, VIDEO_READY_TIMEOUT_MS, abortSignal)
+    video.pause()
 
     if (source.kind === 'remote') {
       await probeCanvasExport(video)
@@ -260,7 +272,7 @@ export async function seekVideo(
     video.currentTime = target
   })
 
-  await ensureCurrentFrame(video, 10000, abortSignal)
+  await ensureCurrentFrame(video, 8000, abortSignal)
 }
 
 export function describeSourceKind(kind: VideoSourceKind): string {

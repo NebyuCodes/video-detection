@@ -1,8 +1,8 @@
 export const SAMPLE_INTERVAL_SECONDS = 1
 
-export const HLS_SAMPLE_INTERVAL_SECONDS = 2
+export const HLS_SAMPLE_INTERVAL_SECONDS = 3
 
-export const HLS_MAX_SAMPLED_FRAMES = 24
+export const HLS_MAX_SAMPLED_FRAMES = 12
 
 export const FRAME_NSFW_THRESHOLD = 0.5
 
