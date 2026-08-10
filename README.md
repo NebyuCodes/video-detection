@@ -31,6 +31,29 @@ npm run build
 npm run preview
 ```
 
+## Deploy on Vercel
+
+1. Push the repo to GitHub (`git@github.com:NebyuCodes/video-detection.git`).
+2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import `NebyuCodes/video-detection`.
+3. Keep defaults (Vite is auto-detected):
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install` (runs `postinstall` to copy WASM files)
+4. Click **Deploy**.
+
+Or from the CLI:
+
+```bash
+npm i -g vercel
+vercel
+```
+
+`vercel.json` is already configured. Vimeo URL support on Vercel uses the serverless function at `api/vimeo/resolve.ts` (same path as local: `/api/vimeo/resolve`).
+
+After deploy, open your Vercel URL and test:
+- local video upload
+- `https://vimeo.com/347119375`
+
 ## Notes
 
 - NSFWJS currently ships MobileNetV2 / MobileNetV2Mid / InceptionV3. This app uses **MobileNetV2** (MobileNet-family backbone with NSFW-trained weights). MobileNetV3 is not available in NSFWJS.
