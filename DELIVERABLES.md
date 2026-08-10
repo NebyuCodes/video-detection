@@ -118,7 +118,7 @@ Remote / Vimeo ──► Resolve (Vimeo → HLS) / Direct URL
 | `video/` | Source creation, CORS probe, seeking, frame extract, Vimeo/HLS |
 | `workers/videoProcessor.worker.ts` | TF.js backend + NSFWJS inference |
 | `ml/` | Backend selection, model load, scoring |
-| `vite-plugin-vimeo.ts` | Server-side Vimeo config resolve (`/api/vimeo/resolve`) |
+| `vite-plugin-vimeo.ts` | Local Vite middleware for Vimeo config resolve (`/api/vimeo/resolve`) |
 
 ### Key design decisions
 
@@ -307,7 +307,7 @@ npm run preview  # production build locally
 
 - App: `http://localhost:5173/`  
 - Example Vimeo URL: `https://vimeo.com/347119375`  
-- Vimeo resolve endpoint (dev/preview middleware): `/api/vimeo/resolve?id=347119375`
+- Vimeo resolve endpoint (local Vite middleware): `/api/vimeo/resolve?id=347119375`
 
 ---
 
